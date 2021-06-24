@@ -95,8 +95,10 @@ if __name__ == "__main__":
     def handle_find_title(message):
         try:
             song_info = get_song(message.from_user.username, message.text)
-            song_info_message = f"Название:\n{message.text}\n\nАккорды:\n{song_info['chords']}\n\n" \
-                                f"Бой:\n{song_info['strumming']}\n\nТекст:\n{song_info['lyrics']}"
+            song_info_message = (
+                f"Название:\n{message.text}\n\nАккорды:\n{song_info['chords']}\n\n"
+                f"Бой:\n{song_info['strumming']}\n\nТекст:\n{song_info['lyrics']}"
+            )
             bot.send_message(message.chat.id, song_info_message)
         except Exception:
             bot.send_message(message.chat.id, "Песня не найдена\n\nВыберите опцию:")
