@@ -31,17 +31,7 @@ def db_connect(db_name):
 
 if __name__ == "__main__":
 
-    # with db_connect('database.db') as db:
-    #     sqlite_create_table_query = '''CREATE TABLE songs123 (
-    #                                 id INTEGER PRIMARY KEY,
-    #                                 user TEXT NOT NULL UNIQUE,
-    #                                 name TEXT NOT NULL UNIQUE,
-    #                                 chords TEXT NOT NULL,
-    #                                 strumming TEXT NOT NULL,
-    #                                 lyrics TEXT NOT NULL);'''
-    #     db.execute(sqlite_create_table_query)
-
-    project_folder = os.path.expanduser("~/PycharmProjects/SongsBot")
+    project_folder = os.path.expanduser("~/PycharmProjects/SongsLibBot")
     load_dotenv(os.path.join(project_folder, ".env"))
 
     bot = telebot.TeleBot(os.getenv("TOKEN"))
