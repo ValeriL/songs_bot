@@ -1,38 +1,42 @@
 import os
-import sqlite3
 from collections import defaultdict
-from contextlib import contextmanager
 
 import telebot
 from dotenv import load_dotenv
 from telebot import types
 
+from logic import Database
+from models import Song
 
-@contextmanager
-def db_connect(db_name):
 
-    try:
-        db_connection = sqlite3.connect(db_name)
-        cursor = db_connection.cursor()
-        yield cursor
+def get_song(user_id, title):
+    return SONGS[user_id][title]
 
-    except sqlite3.Error as error:
-        print("Ошибка при работе с SQLite", error)
 
-    finally:
-        if db_connection:
-            print(
-                "Всего строк, измененных после подключения к базе данных: ",
-                db_connection.total_changes,
-            )
-            db_connection.close()
-            print("Соединение с SQLite закрыто")
+def update_song(username, title, key, value):
+    SONGS[username][title][key] = value
+
+
+def get_state(message):
+    return USER_STATE[message.chat.id]
+
+
+def update_state(message, state):
+    USER_STATE[message.chat.id] = state
 
 
 if __name__ == "__main__":
 
     project_folder = os.path.expanduser("~/PycharmProjects/SongsLibBot")
     load_dotenv(os.path.join(project_folder, ".env"))
+
+    db_link = "postgresql://%s:%s@%s/%s" % (
+        os.getenv("DB_USER"),
+        os.getenv("DB_PASSWORD"),
+        os.getenv("DB_HOST"),
+        os.getenv("DB_NAME"),
+    )
+    db = Database(db_link)
 
     bot = telebot.TeleBot(os.getenv("TOKEN"))
 
@@ -42,27 +46,18 @@ if __name__ == "__main__":
 
     SONGS = defaultdict(lambda: {})
 
-    def get_song(user_id, title):
-        return SONGS[user_id][title]
-
-    def update_song(username, title, key, value):
-        SONGS[username][title][key] = value
-
-    def get_state(message):
-        return USER_STATE[message.chat.id]
-
-    def update_state(message, state):
-        USER_STATE[message.chat.id] = state
-
     @bot.message_handler(commands=["start"])
     @bot.message_handler(func=lambda message: get_state(message) == START)
     def handle_message(message):
+        db.add_user(message.from_user.username)
+
         keyboard = types.ReplyKeyboardMarkup(True)
         add_song_button = types.KeyboardButton("Добавить песню")
         find_song_button = types.KeyboardButton("Найти песню")
         keyboard.row(add_song_button, find_song_button)
-        bot.send_message(message.chat.id, "Выберите опцию:", reply_markup=keyboard)
+
         update_state(message, OPTIONS)
+        bot.send_message(message.chat.id, "Выберите опцию:", reply_markup=keyboard)
 
     @bot.message_handler(func=lambda message: get_state(message) == OPTIONS)
     def handle_option(message):
@@ -84,13 +79,14 @@ if __name__ == "__main__":
     @bot.message_handler(func=lambda message: get_state(message) == FIND_TITLE)
     def handle_find_title(message):
         try:
-            song_info = get_song(message.from_user.username, message.text)
+            song_info = db.find_song(db.find_user(message.from_user.username), message.text)
             song_info_message = (
-                f"Название:\n{message.text}\n\nАккорды:\n{song_info['chords']}\n\n"
-                f"Бой:\n{song_info['strumming']}\n\nТекст:\n{song_info['lyrics']}"
+                f"Название:\n{message.text}\n\nАккорды:\n{song_info.chords}\n\n"
+                f"Бой:\n{song_info.strumming}\n\nТекст:\n{song_info.lyrics}\n\nВыберите опцию:"
             )
             bot.send_message(message.chat.id, song_info_message)
-        except Exception:
+        except Exception as error:
+            print(error)
             bot.send_message(message.chat.id, "Песня не найдена\n\nВыберите опцию:")
         finally:
             update_state(message, OPTIONS)
@@ -111,9 +107,25 @@ if __name__ == "__main__":
 
     @bot.message_handler(func=lambda message: get_state(message) == LYRICS)
     def handle_add_lyrics(message):
-        song_title = CURRENT_SONG[message.from_user.username]
-        update_song(message.from_user.username, song_title, "lyrics", message.text)
+        user = message.from_user.username
+        user_id = db.find_user(user)
+
+        song_title = CURRENT_SONG[user]
+
+        update_song(user, song_title, "lyrics", message.text)
         update_state(message, OPTIONS)
+
+        song = get_song(user, song_title)
+        new_song = Song(
+            user_id=user_id,
+            title=song_title,
+            chords=song["chords"],
+            strumming=song["strumming"],
+            lyrics=song["lyrics"],
+        )
+
+        db.add_song(user_id, new_song)
+        CURRENT_SONG[user] = defaultdict(str)
         bot.send_message(message.chat.id, "Песня сохранена\n\nВыберите опцию:")
 
     bot.polling()

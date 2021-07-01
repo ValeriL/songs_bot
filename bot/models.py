@@ -18,11 +18,11 @@ class Steps(enum.Enum):
 
 class User(Base):
 
-    __table__ = "users"
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(20), nullable=False, unique=True)
-    last_step = Column(Enum(Steps), nullable=False)
+    last_step = Column(Enum(Steps), nullable=False, default=Steps.START)
     children = relationship("Song")
 
     def __repr__(self):
@@ -31,7 +31,7 @@ class User(Base):
 
 class Song(Base):
 
-    __table__ = "songs"
+    __tablename__ = "songs"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"))
