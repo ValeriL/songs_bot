@@ -21,20 +21,6 @@ def upgrade():
         "users",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("username", sa.String(length=20), nullable=False),
-        sa.Column(
-            "last_step",
-            sa.Enum(
-                "START",
-                "OPTIONS",
-                "ADD_TITLE",
-                "CHORDS",
-                "STRUMMING",
-                "LYRICS",
-                "FIND_TITLE",
-                name="steps",
-            ),
-            nullable=False,
-        ),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("username"),
     )
