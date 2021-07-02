@@ -29,7 +29,7 @@ if __name__ == "__main__":
     project_folder = os.path.expanduser("~/PycharmProjects/SongsLibBot")
     load_dotenv(os.path.join(project_folder, ".env"))
 
-    db_link = "postgresql://%s:%s@%s/%s" % (
+    db_link = os.getenv("DATABASE_URL") or "postgresql://%s:%s@%s/%s" % (
         os.getenv("DB_USER"),
         os.getenv("DB_PASSWORD"),
         os.getenv("DB_HOST"),
