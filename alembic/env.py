@@ -25,7 +25,7 @@ target_metadata = models.Base.metadata
 
 
 def get_url():
-    return "postgresql://%s:%s@%s/%s" % (
+    return os.getenv("DATABASE_URL").replace("postgres://", "postgresql://", 1) or "postgresql://%s:%s@%s/%s" % (
         os.getenv("DB_USER"),
         os.getenv("DB_PASSWORD"),
         os.getenv("DB_HOST"),
