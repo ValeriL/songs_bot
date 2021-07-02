@@ -3,10 +3,9 @@ from collections import defaultdict
 
 import telebot
 from dotenv import load_dotenv
-from telebot import types
-
 from logic import Database
 from models import Song
+from telebot import types
 
 
 def get_song(user_id, title):
