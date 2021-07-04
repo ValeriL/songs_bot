@@ -1,6 +1,7 @@
 import os
 from logging.config import fileConfig
 
+from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
@@ -24,15 +25,6 @@ target_metadata = models.Base.metadata
 # ... etc.
 
 
-def get_url():
-    return os.getenv("DATABASE_URL").replace("postgres://", "postgresql://", 1) or "postgresql://%s:%s@%s/%s" % (
-        os.getenv("DB_USER"),
-        os.getenv("DB_PASSWORD"),
-        os.getenv("DB_HOST"),
-        os.getenv("DB_NAME"),
-    )
-
-
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -45,7 +37,14 @@ def run_migrations_offline():
     script output.
 
     """
-    url = get_url()
+    project_folder = os.path.expanduser("~/PycharmProjects/SongsLibBot")
+    load_dotenv(os.path.join(project_folder, ".env"))
+    url = os.getenv("DATABASE_URL").replace("postgres://", "postgresql://", 1) or "postgresql://%s:%s@%s/%s" % (
+        os.getenv("DB_USER"),
+        os.getenv("DB_PASSWORD"),
+        os.getenv("DB_HOST"),
+        os.getenv("DB_NAME"),
+    )
     context.configure(
         url=url,
         target_metadata=target_metadata,
